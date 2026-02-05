@@ -119,23 +119,6 @@ Dashboard v37.3 dibangun menggunakan teknologi *Client-Side Rendering*, sehingga
 
 ---
 
-## 📂 Repository Structure
-
-```text
-SPRCP-Project/
-├── firmware/
-│   ├── v24.4_stable.ino      # Main Firmware Source Code
-│   └── libraries/            # (Optional) Library dependencies list
-├── dashboard/
-│   ├── v37.3.html            # Master Hub Dashboard File
-│   └── assets/               # Icons/Images assets
-├── docs/
-│   ├── pinout_diagram.png    # Hardware wiring diagram
-│   └── calibration_guide.pdf # Sensor calibration manual
-└── README.md                 # Project Documentation
-
----
-
 ## 👨‍💻 Project Maintainer
 
 **Taufiq Hidayatullah**
@@ -144,3 +127,4 @@ SPRCP-Project/
 * *Institution:* Universitas Amikom Yogyakarta
 
 > Copyright © 2026 SPRCP Research Group. This software is provided for academic research purposes.
+
