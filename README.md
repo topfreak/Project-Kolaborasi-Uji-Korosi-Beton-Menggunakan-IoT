@@ -69,7 +69,7 @@ Sistem dibangun di atas platform **ESP32 DOIT DEVKIT V1** dengan konfigurasi per
 | **I2C Bus** | 21 (SDA), 22 (SCL) | Komunikasi Sensor (ADS1115, INA219) & OLED |
 | **Relay Control** | 13, 12, 14, 27, 26, 25, 33, 32 | Aktuator Anoda (M1 s.d. MK17) |
 | **Multiplexer Select** | 23 (S0), 19 (S1), 18 (S2), 5 (S3) | Selektor Kanal Analog |
-| **Multiplexer Enable** | 17 (EN1), 16 (EN2) | Aktivasi Chip Mux |
+| **Multiplexer Enable** | 17, 16 | Enable Chip Mux 1 & 2 |
 | **User Input** | 35, 34, 39, 36 | Tombol Navigasi (OK, UP, DOWN, BACK) |
 | **Temp Sensor** | 15 | DS18B20 OneWire Bus |
 
@@ -81,12 +81,56 @@ Sistem dibangun di atas platform **ESP32 DOIT DEVKIT V1** dengan konfigurasi per
 
 ---
 
+## 🔒 Security & Configuration Guide
+
+Demi keamanan data riset, kredensial koneksi database tidak disertakan dalam repository ini (Sanitized). Pengguna wajib melakukan konfigurasi mandiri agar sistem dapat terhubung ke Google Firebase.
+
+### A. Firmware Configuration (ESP32)
+
+1. Buka file `v24.4.ino` di Arduino IDE.
+2. Cari blok definisi **Network Credentials** di bagian atas kode.
+3. Isi dengan parameter berikut:
+```cpp
+#define WIFI_SSID       "NAMA_WIFI_ANDA"
+#define WIFI_PASSWORD   "PASSWORD_WIFI_ANDA"
+#define API_KEY         "FIREBASE_API_KEY_ANDA"
+#define DATABASE_URL    "[https://PROJECT-ID.firebaseio.com/](https://PROJECT-ID.firebaseio.com/)"
+
+```
+
+
+
+### B. Dashboard Configuration (Web Interface)
+
+File `v37.3.html` memerlukan objek konfigurasi Firebase SDK agar dapat merender data.
+
+1. Buka file `v37.3.html` menggunakan Text Editor (VS Code / Notepad).
+2. Temukan bagian script konfigurasi di dalam tag `<head>` atau di awal `<body>`.
+3. Isi objek `firebaseConfig` dengan format standar berikut (sesuai yang didapat dari Firebase Console):
+```javascript
+const firebaseConfig = {
+    apiKey: "API_KEY_DARI_FIREBASE_CONSOLE",
+    authDomain: "PROJECT_ID.firebaseapp.com",
+    databaseURL: "https://PROJECT_ID.firebaseio.com",
+    projectId: "PROJECT_ID",
+    storageBucket: "PROJECT_ID.appspot.com",
+    messagingSenderId: "SENDER_ID",
+    appId: "APP_ID"
+};
+
+```
+
+
+4. Simpan file, lalu buka kembali menggunakan browser.
+
+---
+
 ## 💻 Installation & Usage Guide
 
-### A. Firmware Deployment (ESP32)
+### Firmware Deployment
 
-1. **Environment:** Pastikan **Arduino IDE** (v2.0+) terinstall dengan dukungan board ESP32.
-2. **Dependencies:** Install library berikut melalui Library Manager:
+1. **Environment:** Pastikan **Arduino IDE** (v2.0+) terinstall.
+2. **Dependencies:** Install library berikut via Library Manager:
 * `Firebase_ESP_Client` (by Mobizt)
 * `Adafruit ADS1X15`
 * `Adafruit INA219`
@@ -94,29 +138,15 @@ Sistem dibangun di atas platform **ESP32 DOIT DEVKIT V1** dengan konfigurasi per
 * `DallasTemperature` & `OneWire`
 
 
-3. **Configuration:**
-* Buka file `v24.4.ino`.
-* Sesuaikan kredensial pada bagian *macros*:
-```cpp
-#define WIFI_SSID "YOUR_WIFI_NAME"
-#define WIFI_PASSWORD "YOUR_WIFI_PASS"
-#define API_KEY "YOUR_FIREBASE_API_KEY"
-#define DATABASE_URL "YOUR_RTDB_URL"
+3. **Flashing:** Pilih Board **DOIT ESP32 DEVKIT V1**, atur Upload Speed ke **921600**, dan klik Upload.
 
-```
+### Dashboard Deployment
 
+Dashboard v37.3 adalah aplikasi *Serverless* yang berjalan di sisi klien (Client-Side).
 
-
-
-4. **Flashing:** Pilih Board **DOIT ESP32 DEVKIT V1**, atur Upload Speed ke **921600**, dan klik Upload.
-
-### B. Dashboard Deployment
-
-Dashboard v37.3 dirancang sebagai aplikasi *Serverless* yang berjalan penuh di sisi klien (browser).
-
-1. Pastikan file `v37.3.html` berada dalam satu direktori dengan aset proyek.
-2. Buka file tersebut menggunakan browser modern (Google Chrome, Edge, atau Firefox).
-3. **Requirement:** Pastikan perangkat terhubung ke internet untuk memuat library CDN (Tailwind, ApexCharts, Firebase SDK) dan melakukan sinkronisasi data *real-time*.
+1. Pastikan file `v37.3.html` berada di folder proyek.
+2. Double-click file untuk menjalankannya di browser modern (Chrome/Edge/Firefox).
+3. **Requirement:** Koneksi internet diperlukan untuk memuat library CDN (ApexCharts, Tailwind) dan koneksi WebSocket ke database.
 
 ---
 
@@ -147,7 +177,5 @@ Sistem ini mengikuti alur kerja akuisisi data standar instrumentasi:
 ---
 
 *Copyright © 2026 SPRCP Research Group. This software is provided for academic research purposes.*
-
-```
 
 ```
