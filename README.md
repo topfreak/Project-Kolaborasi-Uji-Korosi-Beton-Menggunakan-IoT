@@ -1,130 +1,153 @@
 # SPRCP IoT Monitoring System (Smart Patch Repair Cathodic Protection)
 
 ![Version](https://img.shields.io/badge/Version-v24.4_Stable-blue)
-![Platform](https://img.shields.io/badge/Platform-ESP32_WROOM-green)
-![Dashboard](https://img.shields.io/badge/Web_Interface-v37.3-orange)
+![Platform](https://img.shields.io/badge/Platform-ESP32_SoC-green)
+![Architecture](https://img.shields.io/badge/Architecture-High_Fidelity_DAQ-red)
 ![License](https://img.shields.io/badge/License-Academic_Research-lightgrey)
 
 ## 📖 Executive Summary
 
-**SPRCP Monitoring System** adalah platform IoT terintegrasi yang dirancang untuk evaluasi korosi pada struktur beton bertulang. Sistem ini dikembangkan untuk mendukung penelitian metode perbaikan *Smart Patch Repair* dengan dua mekanisme proteksi: *Sacrificial Anode Cathodic Protection* (SACP) dan *Hybrid Cathodic Protection* (HCP).
+**SPRCP (Smart Patch Repair Cathodic Protection) Monitoring System** adalah platform instrumentasi IoT terpadu yang dirancang untuk evaluasi korosi pada struktur beton bertulang. Sistem ini dikembangkan untuk mendukung validasi metode perbaikan *Smart Patch* yang mengintegrasikan dua mekanisme proteksi elektrokimia: *Sacrificial Anode Cathodic Protection* (SACP) dan *Hybrid Cathodic Protection* (HCP).
 
-Sistem ini mengadopsi arsitektur **High-Fidelity Data Acquisition**, di mana integritas data diutamakan mulai dari pembacaan sensor di level *hardware* hingga visualisasi di *dashboard*.
+Repository ini memuat implementasi sistem *end-to-end*, mencakup *Embedded Firmware* untuk akuisisi data presisi tinggi dan *Master Dashboard* untuk analisis visual real-time. Sistem dirancang dengan filosofi **"Direct Precision Sampling"**, memastikan setiap data yang direkam memiliki integritas tinggi sesuai standar pengukuran NACE/ASTM.
 
 ---
 
-## 🏗️ System Architecture
+## 📂 Repository Structure
 
-Sistem terdiri dari dua entitas utama yang terhubung melalui Google Firebase Realtime Database:
+Proyek ini menggunakan struktur *flat-directory* untuk kemudahan deployment dan manajemen aset:
 
-1.  **Firmware Node (v24.4):** Mengelola akuisisi data fisik, switching relay, dan sinkronisasi waktu.
-2.  **Master Hub Dashboard (v37.3):** Antarmuka pusat untuk monitoring, kalibrasi instrumen, dan pelaporan data.
+```text
+SPRCP-Project/
+├── v24.4.ino       # Firmware Utama (ESP32 Source Code) - Data Acquisition Node
+├── v37.3.html      # Master Hub Dashboard (Single-File Web Application)
+└── README.md       # Dokumentasi Teknis Sistem
 
-### 1. Firmware Specification (v24.4)
-Firmware ini berjalan pada mikrokontroler ESP32 dengan fokus pada stabilitas pengukuran sinyal analog presisi.
+```
 
-* **Precision ADC Engine:**
-    Menggunakan modul ADS1115 (16-bit) dengan konfigurasi *Differential Input*. Algoritma sampling menggunakan metode `Oversampling` (128 samples/window) untuk mereduksi *noise* elektronik dan mendapatkan nilai *DC Potential* yang stabil.
-* **32-Channel Multiplexing Matrix:**
-    Sistem mampu memonitor 8 Benda Uji (M1-MK17) dengan masing-masing 2 Tulangan (T1, T2) secara sekuensial menggunakan *logic switching* CD74HC4067 ganda.
-* **Nano-Current Sensing:**
-    Monitoring arus anoda menggunakan topologi *High-Side Sensing* via INA219, memungkinkan deteksi arus korosi dalam orde mikro-ampere (µA) hingga mili-ampere (mA).
+---
+
+## 🛠️ System Components
+
+### 1. Firmware Node (v24.4)
+
+Firmware v24.4 adalah otak dari sistem akuisisi data yang berjalan pada mikrokontroler ESP32. Versi ini difokuskan pada stabilitas sinyal analog dan akurasi *timing*.
+
+* **Core Architecture:** Menggunakan pendekatan **Direct ADC Acquisition**. Sistem membaca sinyal sensor secara langsung tanpa pemrosesan artifisial, menjamin data yang dikirim ke cloud adalah representasi faktual dari kondisi fisik beton.
+* **Precision Sensing Engine:**
+* **Voltage:** Implementasi sensor ADS1115 (16-bit) dengan algoritma *Oversampling* (128 samples/window) untuk mereduksi *white noise* dan mendapatkan *DC Potential* yang stabil.
+* **Current:** Monitoring arus anoda menggunakan topologi *High-Side Sensing* (INA219) dengan resolusi mikro-ampere ().
+
+
+* **32-Channel Multiplexing:** Mengontrol matriks pengukuran untuk 8 Benda Uji (M1-MK17) x 2 Tulangan dengan total 32 titik ukur independen.
+* **Standardized Calibration:** Mendukung kompensasi toleransi perangkat keras menggunakan fungsi kalibrasi linear () untuk setiap kanal.
 * **Measurement Protocols:**
-    * **Phase 1 (Instant-Off):** Algoritma pemutusan arus cepat (<150ms latency) untuk mengukur *True Polarized Potential* sesuai standar NACE.
-    * **Phase 2 (Rest):** Monitoring fase depolarisasi beton.
-    * **HCP Natural:** Mode pemantauan pasif untuk sistem Hybrid.
-* **Fail-Safe Storage:**
-    Menggunakan partisi NVS (*Non-Volatile Storage*) untuk menyimpan *state* terakhir, memungkinkan sistem melakukan *Auto-Resume* setelah gangguan daya.
+* *Phase 1 (Instant-Off):* Algoritma interupsi arus presisi (<150ms latency).
+* *Phase 2 (Rest):* Monitoring fase depolarisasi.
+* *HCP Natural:* Mode pemantauan pasif sistem Hybrid.
 
-### 2. Dashboard Analytics (v37.3)
-Aplikasi berbasis web (Single-Page Application) yang berfungsi sebagai pusat kendali riset.
 
-* **Real-time Visualization:** Grafik interaktif berbasis *ApexCharts* yang menampilkan tren Potensial (CSE) dan Arus (mA) secara *live*.
-* **Instrumentation Calibration:** Fitur untuk memasukkan koefisien kalibrasi linear ($y = ax^2 + bx + c$) untuk setiap kanal sensor, memastikan data yang tampil sesuai dengan standar alat ukur referensi.
-* **Automated Reporting:** Modul ekspor data otomatis ke format Excel (.xlsx) dengan struktur laporan yang telah disesuaikan per Minggu dan per Fase (HCP/SACP).
+
+### 2. Master Hub Dashboard (v37.3)
+
+Antarmuka pusat kendali riset berbasis web (*Client-Side Application*).
+
+* **Real-time Analytics:** Visualisasi data Potensial (CSE) dan Arus (mA) menggunakan grafik dinamis *ApexCharts*.
+* **Remote Configuration:** Pengaturan parameter riset (Interval, Luas Permukaan, Tanggal Mulai) dilakukan secara nirkabel (OTA Config).
+* **Automated Reporting:** Modul ekspor data otomatis ke format Excel (.xlsx) dengan struktur laporan mingguan yang terstandarisasi untuk analisis lanjutan.
 
 ---
 
-## 🛠️ Hardware Pinout Configuration
+## ⚙️ Hardware Configuration
 
-Sistem menggunakan **ESP32 DOIT DEVKIT V1** sebagai unit pemroses utama. Berikut adalah pemetaan I/O (*Input/Output*) yang digunakan dalam Firmware v24.4:
+Sistem dibangun di atas platform **ESP32 DOIT DEVKIT V1** dengan konfigurasi periferal sebagai berikut:
 
-### I2C Bus & Sensors
-| Component | Pin (SDA) | Pin (SCL) | Address |
-| :--- | :--- | :--- | :--- |
-| **Main Bus** | GPIO 21 | GPIO 22 | - |
-| **ADS1115 (ADC)** | - | - | `0x48` |
-| **INA219 (Current)** | - | - | `0x40` |
-| **SSD1306 (OLED)** | - | - | `0x3C` |
+### Pinout Map (v24.4)
 
-### Control & Actuators
-| Function | GPIO Pins | Description |
-| :--- | :--- | :--- |
-| **Relay Actuators** | 13, 12, 14, 27, 26, 25, 33, 32 | Active Low Control for M1-MK17 |
-| **Multiplexer S0-S3** | 23, 19, 18, 5 | Channel Selection Lines |
-| **Mux Enable (EN)** | 17, 16 | Enable Line for Mux 1 & Mux 2 |
+| Interface | GPIO Pin | Function |
+| --- | --- | --- |
+| **I2C Bus** | 21 (SDA), 22 (SCL) | Komunikasi Sensor (ADS1115, INA219) & OLED |
+| **Relay Control** | 13, 12, 14, 27, 26, 25, 33, 32 | Aktuator Anoda (M1 s.d. MK17) |
+| **Multiplexer Select** | 23 (S0), 19 (S1), 18 (S2), 5 (S3) | Selektor Kanal Analog |
+| **Multiplexer Enable** | 17 (EN1), 16 (EN2) | Aktivasi Chip Mux |
+| **User Input** | 35, 34, 39, 36 | Tombol Navigasi (OK, UP, DOWN, BACK) |
 | **Temp Sensor** | 15 | DS18B20 OneWire Bus |
 
-### User Interface
-| Button | GPIO Pin | Type |
-| :--- | :--- | :--- |
-| **OK / Enter** | 35 | Input Pull-up |
-| **UP** | 34 | Input Pull-up |
-| **DOWN** | 39 | Input Pull-up |
-| **BACK** | 36 | Input Pull-up |
+### Sensor Addressing
+
+* **ADS1115 (ADC):** `0x48`
+* **INA219 (Current):** `0x40`
+* **SSD1306 (OLED):** `0x3C`
 
 ---
 
-## 💻 Installation & Deployment Guide
-
-Bagian ini menjelaskan langkah teknis untuk melakukan *deployment* kode ke perangkat keras dan menjalankan dashboard.
+## 💻 Installation & Usage Guide
 
 ### A. Firmware Deployment (ESP32)
 
-**Prerequisites:**
-1.  **Arduino IDE** versi 2.0 ke atas.
-2.  Driver USB-to-TTL (CP210x atau CH340) terinstall.
-
-**Required Libraries (Install via Library Manager):**
-* `Firebase_ESP_Client` by Mobizt
+1. **Environment:** Pastikan **Arduino IDE** (v2.0+) terinstall dengan dukungan board ESP32.
+2. **Dependencies:** Install library berikut melalui Library Manager:
+* `Firebase_ESP_Client` (by Mobizt)
 * `Adafruit ADS1X15`
 * `Adafruit INA219`
 * `Adafruit SSD1306` & `Adafruit GFX`
 * `DallasTemperature` & `OneWire`
 
-**Steps:**
-1.  Buka file `firmware/v24.4_stable.ino`.
-2.  Konfigurasi kredensial jaringan dan database pada bagian *macros*:
-    ```cpp
-    #define WIFI_SSID "YOUR_WIFI_SSID"
-    #define WIFI_PASSWORD "YOUR_WIFI_PASS"
-    #define API_KEY "YOUR_FIREBASE_API_KEY"
-    #define DATABASE_URL "YOUR_RTDB_URL"
-    ```
-3.  Pilih Board: **DOIT ESP32 DEVKIT V1**.
-4.  Atur Upload Speed ke **921600** untuk mempercepat proses flash.
-5.  Klik **Upload**.
 
-### B. Dashboard Deployment (Web Interface)
+3. **Configuration:**
+* Buka file `v24.4.ino`.
+* Sesuaikan kredensial pada bagian *macros*:
+```cpp
+#define WIFI_SSID "YOUR_WIFI_NAME"
+#define WIFI_PASSWORD "YOUR_WIFI_PASS"
+#define API_KEY "YOUR_FIREBASE_API_KEY"
+#define DATABASE_URL "YOUR_RTDB_URL"
 
-Dashboard v37.3 dibangun menggunakan teknologi *Client-Side Rendering*, sehingga tidak memerlukan *backend server* khusus (Node.js/PHP).
+```
 
-**Local Deployment:**
-1.  Pastikan folder `dashboard` berisi file `v37.3.html`.
-2.  Cukup buka file tersebut menggunakan browser modern (Google Chrome, Edge, atau Firefox).
-3.  *Note:* Pastikan komputer terhubung ke internet untuk memuat library CDN (Tailwind, ApexCharts, Firebase SDK).
 
-**Cloud Deployment (Optional):**
-* File `v37.3.html` dapat di-hosting menggunakan layanan statis seperti **GitHub Pages**, **Netlify**, atau **Firebase Hosting** untuk akses publik.
+
+
+4. **Flashing:** Pilih Board **DOIT ESP32 DEVKIT V1**, atur Upload Speed ke **921600**, dan klik Upload.
+
+### B. Dashboard Deployment
+
+Dashboard v37.3 dirancang sebagai aplikasi *Serverless* yang berjalan penuh di sisi klien (browser).
+
+1. Pastikan file `v37.3.html` berada dalam satu direktori dengan aset proyek.
+2. Buka file tersebut menggunakan browser modern (Google Chrome, Edge, atau Firefox).
+3. **Requirement:** Pastikan perangkat terhubung ke internet untuk memuat library CDN (Tailwind, ApexCharts, Firebase SDK) dan melakukan sinkronisasi data *real-time*.
+
+---
+
+## 📊 Scientific Workflow
+
+Sistem ini mengikuti alur kerja akuisisi data standar instrumentasi:
+
+1. **System Handshake:** Sinkronisasi waktu (NTP) dan pengambilan profil kalibrasi dari Cloud.
+2. **Signal Acquisition:**
+* Multiplexer mengarahkan jalur pengukuran ke elektroda target.
+* ADC mengambil sampel data mentah (*Raw Differential Voltage*).
+* Filter digital menerapkan *averaging* untuk stabilitas sinyal.
+
+
+3. **Signal Conditioning:** Data mentah dikonversi menjadi nilai teknik menggunakan koefisien kalibrasi hardware () untuk mengeliminasi toleransi komponen pasif.
+4. **Telemetry:** Data valid dikirim ke Firebase Realtime Database dengan *timestamp* presisi untuk visualisasi di Dashboard.
 
 ---
 
 ## 👨‍💻 Project Maintainer
 
 **Taufiq Hidayatullah**
-* *Role:* Lead Research Developer
-* *Project:* Smart Patch Repair Cathodic Protection (SPRCP)
-* *Institution:* Universitas Amikom Yogyakarta
 
-> Copyright © 2026 SPRCP Research Group. This software is provided for academic research purposes.
+* **Role:** Lead Research Developer
+* **Focus:** IoT Instrumentation & Structural Health Monitoring
+* **Institution:** Universitas Amikom Yogyakarta
 
+---
+
+*Copyright © 2026 SPRCP Research Group. This software is provided for academic research purposes.*
+
+```
+
+```
